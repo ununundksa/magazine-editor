@@ -1,420 +1,579 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
   <title>0.1% 매거진 스튜디오</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"
-          integrity="sha512-CeIsOAsgFnBptMOmMFMnEXoMOLR6fSEVWxqZlDxMYEohztoEkgdCOOlUDr7oNMhGwB/ReBHzdHkTJpAcfBiJw=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" crossorigin="anonymous"></script>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    :root{
-      --bg:#000;--surface:#1c1c1e;--card:#2c2c2e;--border:#3a3a3c;
-      --text:#fff;--muted:#98989d;--accent:#0a84ff;--danger:#ff453a;
-      --success:#30d158;--r:12px;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent
     }
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
-      font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;}
-    #app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
 
-    /* ── Header ── */
-    #header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-      padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);}
-    .logo{font-size:15px;font-weight:700;letter-spacing:-.4px;}
-    .logo span{color:var(--accent);}
-    #hint{font-size:11px;color:var(--muted);}
+    :root {
+      --bg: #000;
+      --sur: #1c1c1e;
+      --card: #2c2c2e;
+      --bd: #3a3a3c;
+      --txt: #fff;
+      --mut: #98989d;
+      --acc: #0a84ff;
+      --dan: #ff453a;
+      --r: 12px
+    }
 
-    /* ── Toolbar ── */
-    #toolbar{flex-shrink:0;display:flex;gap:6px;padding:8px 12px;
-      background:var(--surface);border-bottom:1px solid var(--border);
-      overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-    #toolbar::-webkit-scrollbar{display:none;}
-    .tbtn{display:flex;align-items:center;gap:5px;padding:7px 11px;
-      background:var(--card);border:1px solid var(--border);border-radius:8px;
-      color:var(--text);font-size:12px;white-space:nowrap;cursor:pointer;
-      transition:.15s;user-select:none;}
-    .tbtn:active{opacity:.7;transform:scale(.96);}
-    .tbtn.on{background:var(--accent);border-color:var(--accent);}
-    .tbtn.danger{color:var(--danger);}
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif
+    }
 
-    /* ── Canvas ── */
-    #canvas-wrap{flex:1;display:flex;justify-content:center;align-items:center;
-      padding:12px;overflow:hidden;background:#111;}
-    canvas{border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.85);display:block;max-width:100%;}
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh
+    }
 
-    /* ── Props Panel ── */
-    #props{flex-shrink:0;padding:10px 14px;background:var(--surface);
-      border-top:1px solid var(--border);display:none;}
-    #props.show{display:block;}
-    .prow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-    .prow label{font-size:11px;color:var(--muted);min-width:48px;}
-    .pinput{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;
-      padding:7px 10px;color:var(--text);font-size:13px;}
-    .pinput:focus{outline:none;border-color:var(--accent);}
+    /* Header */
+    #hdr {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--sur);
+      border-bottom: 1px solid var(--bd)
+    }
 
-    /* ── Bottom Bar ── */
-    #bottom{flex-shrink:0;padding:10px 14px;
-      padding-bottom:max(10px,env(safe-area-inset-bottom));
-      background:var(--surface);border-top:1px solid var(--border);}
-    #pub-btn{width:100%;padding:14px;background:var(--accent);border:none;
-      border-radius:var(--r);color:#fff;font-size:16px;font-weight:600;
-      cursor:pointer;transition:.15s;letter-spacing:-.3px;}
-    #pub-btn:active{transform:scale(.98);opacity:.9;}
-    #pub-btn:disabled{background:var(--card);color:var(--muted);}
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.4px
+    }
 
-    /* ── Loading ── */
-    #loading{position:fixed;inset:0;background:rgba(0,0,0,.88);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;}
-    #loading.hide{display:none;}
-    .spin{width:44px;height:44px;border:3px solid var(--border);
-      border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    #loading p{margin-top:14px;color:var(--muted);font-size:13px;}
+    .logo span {
+      color: var(--acc)
+    }
 
-    /* ── Toast ── */
-    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);
-      background:var(--card);border:1px solid var(--border);border-radius:8px;
-      padding:9px 14px;font-size:12px;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;}
-    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    #hint {
+      font-size: 11px;
+      color: var(--mut)
+    }
+
+    /* Toolbar */
+    #tb {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--sur);
+      border-bottom: 1px solid var(--bd);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none
+    }
+
+    #tb::-webkit-scrollbar {
+      display: none
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 11px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      color: var(--txt);
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: .15s;
+      user-select: none
+    }
+
+    .btn:active {
+      opacity: .7;
+      transform: scale(.96)
+    }
+
+    .btn.on {
+      background: var(--acc);
+      border-color: var(--acc)
+    }
+
+    .btn.dn {
+      color: var(--dan)
+    }
+
+    /* Canvas */
+    #cw {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      overflow: hidden;
+      background: #111
+    }
+
+    canvas {
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, .85);
+      display: block
+    }
+
+    /* Props */
+    #props {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      background: var(--sur);
+      border-top: 1px solid var(--bd);
+      display: none
+    }
+
+    #props.show {
+      display: block
+    }
+
+    .pr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px
+    }
+
+    .pr label {
+      font-size: 11px;
+      color: var(--mut);
+      min-width: 48px
+    }
+
+    .pi {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: var(--txt);
+      font-size: 13px
+    }
+
+    .pi:focus {
+      outline: none;
+      border-color: var(--acc)
+    }
+
+    /* Bottom */
+    #bot {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      background: var(--sur);
+      border-top: 1px solid var(--bd)
+    }
+
+    #pub {
+      width: 100%;
+      padding: 14px;
+      background: var(--acc);
+      border: none;
+      border-radius: var(--r);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s;
+      letter-spacing: -.3px
+    }
+
+    #pub:active {
+      transform: scale(.98);
+      opacity: .9
+    }
+
+    #pub:disabled {
+      background: var(--card);
+      color: var(--mut)
+    }
+
+    /* Loading */
+    #ld {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999
+    }
+
+    #ld.hide {
+      display: none
+    }
+
+    .sp {
+      width: 44px;
+      height: 44px;
+      border: 3px solid var(--bd);
+      border-top-color: var(--acc);
+      border-radius: 50%;
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    #ld p {
+      margin-top: 14px;
+      color: var(--mut);
+      font-size: 13px
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 12px;
+      opacity: 0;
+      transition: .25s;
+      pointer-events: none;
+      white-space: nowrap
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0)
+    }
   </style>
 </head>
+
 <body>
-<div id="loading"><div class="spin"></div><p>스튜디오 로딩 중...</p></div>
-
-<div id="app">
-  <div id="header">
-    <div class="logo">[<span>0.1%</span>] 스튜디오</div>
-    <div id="hint">요소를 선택하여 편집하세요</div>
+  <div id="ld">
+    <div class="sp"></div>
+    <p id="ld-msg">이미지 로딩 중...</p>
   </div>
 
-  <div id="toolbar">
-    <button class="tbtn on" id="tb-hl"    onclick="selectElem('headline')">T 헤드라인</button>
-    <button class="tbtn on" id="tb-sl"    onclick="selectElem('subline')">t 서브라인</button>
-    <button class="tbtn"    id="tb-logo"  onclick="toggleElem('logo')">◈ 로고</button>
-    <button class="tbtn"    id="tb-mag"   onclick="toggleElem('magnifier')">◎ 돋보기</button>
-    <button class="tbtn danger"           onclick="deleteSelected()">✕ 삭제</button>
-    <button class="tbtn"                  onclick="resetCanvas()">↺ 초기화</button>
+  <div id="app">
+    <div id="hdr">
+      <div class="logo">[<span>0.1%</span>] 스튜디오</div>
+      <div id="hint">요소를 선택하여 편집</div>
+    </div>
+
+    <div id="tb">
+      <button class="btn on" onclick="sel('headline')">T 헤드라인</button>
+      <button class="btn on" onclick="sel('subline')">t 서브라인</button>
+      <button class="btn" id="btn-logo" onclick="tog('logo')">◈ 로고</button>
+      <button class="btn on" id="btn-mag" onclick="tog('magnifier')">◎ 돋보기</button>
+      <button class="btn dn" onclick="del()">✕ 삭제</button>
+      <button class="btn" onclick="reset()">↺ 초기화</button>
+    </div>
+
+    <div id="cw"><canvas id="c"></canvas></div>
+
+    <div id="props">
+      <div class="pr" id="r-txt"><label>텍스트</label>
+        <input class="pi" id="p-txt" type="text" oninput="upTxt()">
+      </div>
+      <div class="pr" id="r-sz"><label>크기</label>
+        <input class="pi" id="p-sz" type="range" min="8" max="100" value="36" style="padding:0;height:28px"
+          oninput="upSz(this.value)">
+        <span id="p-sz-v" style="color:var(--mut);font-size:12px;min-width:28px">36</span>
+      </div>
+      <div class="pr" id="r-col"><label>색상</label>
+        <input class="pi" id="p-col" type="color" value="#ffffff" style="height:34px;padding:2px;cursor:pointer"
+          oninput="upCol(this.value)">
+      </div>
+    </div>
+
+    <div id="bot">
+      <button id="pub" onclick="publish()">🚀 최종 발행</button>
+    </div>
   </div>
+  <div id="toast"></div>
 
-  <div id="canvas-wrap"><canvas id="c"></canvas></div>
+  <script>
+    // ── Telegram ─────────────────────────────────────────────────────
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); tg.enableClosingConfirmation(); }
 
-  <div id="props">
-    <div class="prow" id="row-text"><label>텍스트</label>
-      <input class="pinput" id="p-text" type="text" oninput="updateSelectedText()"></div>
-    <div class="prow" id="row-size"><label>크기</label>
-      <input class="pinput" id="p-size" type="range" min="8" max="100" value="36" style="padding:0;height:28px" oninput="updateFontSize(this.value)">
-      <span id="p-size-val" style="color:var(--muted);font-size:12px;min-width:28px">36</span></div>
-    <div class="prow" id="row-color"><label>색상</label>
-      <input class="pinput" id="p-color" type="color" value="#ffffff"
-             style="height:34px;padding:2px;cursor:pointer" oninput="updateColor(this.value)"></div>
-  </div>
+    // ── URL Params ───────────────────────────────────────────────────
+    const P = new URLSearchParams(location.search);
+    const IMG = P.get('img') || '';
+    const TITLE = decodeURIComponent(P.get('title') || '헤드라인을 입력하세요');
+    const SUB = decodeURIComponent(P.get('sub') || '서브라인을 입력하세요');
 
-  <div id="bottom">
-    <button id="pub-btn" onclick="publishCard()">🚀 최종 발행</button>
-  </div>
-</div>
-<div id="toast"></div>
+    // ── Canvas Setup (4:5 portrait) ──────────────────────────────────
+    const RATIO = 1350 / 1080;
+    const wrap = document.getElementById('cw');
+    const CW = Math.min(wrap.clientWidth - 24, 420);
+    const CH = Math.round(CW * RATIO);
 
-<script>
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Telegram WebApp Init
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); tg.enableClosingConfirmation(); }
-const tgTheme = tg?.themeParams || {};
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// URL Params
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const params      = new URLSearchParams(location.search);
-const SESSION_ID  = params.get('session_id') || 'demo';
-const INIT_HL     = decodeURIComponent(params.get('headline') || '여기를 탭하여 편집하세요');
-const INIT_SL     = decodeURIComponent(params.get('subline')  || '서브라인 텍스트');
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Canvas Setup  (4:5 비율)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const RATIO     = 1350/1080;
-const wrap      = document.getElementById('canvas-wrap');
-const MAX_W     = Math.min(wrap.clientWidth - 24, 420);
-const CW        = MAX_W;
-const CH        = Math.round(CW * RATIO);
-
-const fc = new fabric.Canvas('c', { width:CW, height:CH, backgroundColor:'#111',
-  preserveObjectStacking:true });
-
-// element registry
-const EL = {};   // { headline, subline, logo, magnifier }
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Load Background Image
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function loadBg() {
-  const url = `/session/${SESSION_ID}/image?_=${Date.now()}`;
-  fabric.Image.fromURL(url, (img) => {
-    if (img && img.width) {
-      const sc = Math.min(CW/img.width, CH/img.height);
-      img.set({ left:(CW-img.width*sc)/2, top:(CH-img.height*sc)/2,
-                scaleX:sc, scaleY:sc, selectable:false, evented:false,
-                elementType:'bg' });
-      fc.add(img); fc.sendToBack(img);
-    } else {
-      // 검정 bg fallback
-      fc.add(Object.assign(new fabric.Rect({width:CW,height:CH,left:0,top:0,
-        fill:'#1a1a2e',selectable:false,evented:false,elementType:'bg'})));
-    }
-    addGradient();
-    addDefaultElements();
-    loadLogo();
-    addMagnifier();
-    document.getElementById('loading').classList.add('hide');
-  }, {crossOrigin:'anonymous'});
-}
-
-function addGradient() {
-  const h = CH * 0.45;
-  fc.add(new fabric.Rect({
-    left:0, top:CH-h, width:CW, height:h,
-    fill:new fabric.Gradient({type:'linear', gradientUnits:'pixels',
-      coords:{x1:0,y1:0,x2:0,y2:h},
-      colorStops:[{offset:0,color:'rgba(0,0,0,0)'},{offset:.5,color:'rgba(0,0,0,.6)'},
-                  {offset:1,color:'rgba(0,0,0,.92)'}]}),
-    selectable:false, evented:false, elementType:'gradient'
-  }));
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Text Elements
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function addDefaultElements() {
-  const hlSize = Math.round(CW * 0.065);
-  const hl = new fabric.IText(INIT_HL, {
-    left:CW*0.06, top:CH*0.73, width:CW*0.88,
-    fontSize:hlSize, fontWeight:'bold',
-    fontFamily:'-apple-system,Helvetica,Arial,sans-serif',
-    fill:'#ffffff', shadow:'2px 2px 5px rgba(0,0,0,.8)',
-    editable:true, selectable:true, elementType:'headline'
-  });
-  EL.headline = hl; fc.add(hl);
-
-  const slSize = Math.round(CW * 0.040);
-  const sl = new fabric.IText(INIT_SL, {
-    left:CW*0.06, top:CH*0.84, width:CW*0.88,
-    fontSize:slSize,
-    fontFamily:'-apple-system,Helvetica,Arial,sans-serif',
-    fill:'#e0e0e0', shadow:'1px 1px 3px rgba(0,0,0,.8)',
-    editable:true, selectable:true, elementType:'subline'
-  });
-  EL.subline = sl; fc.add(sl);
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Logo
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function loadLogo() {
-  const url = `/session/${SESSION_ID}/logo?_=${Date.now()}`;
-  fabric.Image.fromURL(url, (img) => {
-    if (!img || !img.width) return;
-    const maxW = CW * 0.35;
-    const sc   = Math.min(maxW/img.width, 1);
-    img.set({ left:(CW-img.width*sc)/2, top:CH*0.03,
-              scaleX:sc, scaleY:sc, selectable:true, elementType:'logo' });
-    EL.logo = img;
-    fc.add(img); fc.renderAll();
-    document.getElementById('tb-logo').classList.add('on');
-  }, {crossOrigin:'anonymous'});
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Magnifier
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function addMagnifier() {
-  const r = Math.round(CW * 0.13);
-  const c = new fabric.Circle({
-    radius:r, left:CW-r*2-CW*0.06, top:CH-r*2-CH*0.06,
-    fill:'rgba(255,255,255,0.08)', stroke:'#fff', strokeWidth:2,
-    strokeDashArray:[5,4], selectable:true, elementType:'magnifier'
-  });
-  // Label
-  const t = new fabric.Text('돋보기', {
-    fontSize:Math.round(r*0.4), fill:'rgba(255,255,255,0.7)',
-    selectable:false, evented:false, originX:'center', originY:'center',
-    left:c.left+r, top:c.top+r
-  });
-  const g = new fabric.Group([c, t], { selectable:true, elementType:'magnifier',
-    subTargetCheck:false });
-  EL.magnifier = g; fc.add(g);
-  document.getElementById('tb-mag').classList.add('on');
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Toolbar Actions
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function selectElem(type) {
-  const obj = EL[type];
-  if (obj) { fc.setActiveObject(obj); fc.renderAll(); }
-}
-
-function toggleElem(type) {
-  const obj = EL[type];
-  const btn = document.getElementById(`tb-${type === 'magnifier' ? 'mag' : 'logo'}`);
-  if (!obj) return;
-  obj.visible = !obj.visible;
-  fc.renderAll();
-  btn.classList.toggle('on', obj.visible);
-}
-
-function deleteSelected() {
-  const obj = fc.getActiveObject();
-  if (!obj) return;
-  const type = obj.elementType;
-  if (type === 'bg' || type === 'gradient') { toast('배경은 삭제할 수 없습니다'); return; }
-  fc.remove(obj);
-  if (type in EL) delete EL[type];
-  if (type === 'magnifier') document.getElementById('tb-mag').classList.remove('on');
-  if (type === 'logo')      document.getElementById('tb-logo').classList.remove('on');
-  hideProps(); fc.renderAll();
-}
-
-function resetCanvas() {
-  if (!confirm('캔버스를 초기화할까요?')) return;
-  fc.clear(); fc.backgroundColor='#111';
-  Object.keys(EL).forEach(k => delete EL[k]);
-  loadBg();
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Properties Panel
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function showProps(obj) {
-  const panel = document.getElementById('props');
-  const type  = obj.elementType;
-  const isText = type === 'headline' || type === 'subline';
-  document.getElementById('row-text').style.display  = isText ? 'flex' : 'none';
-  document.getElementById('row-size').style.display  = isText ? 'flex' : 'none';
-  document.getElementById('row-color').style.display = isText ? 'flex' : 'none';
-  if (isText) {
-    document.getElementById('p-text').value  = obj.text  || '';
-    const fs = Math.round(obj.fontSize || 36);
-    document.getElementById('p-size').value  = fs;
-    document.getElementById('p-size-val').textContent = fs;
-    document.getElementById('p-color').value = obj.fill || '#ffffff';
-  }
-  panel.classList.add('show');
-  document.getElementById('hint').textContent = type || '선택됨';
-}
-
-function hideProps() {
-  document.getElementById('props').classList.remove('show');
-  document.getElementById('hint').textContent = '요소를 선택하여 편집하세요';
-}
-
-function updateSelectedText() {
-  const obj = fc.getActiveObject();
-  if (obj && obj.set) { obj.set('text', document.getElementById('p-text').value); fc.renderAll(); }
-}
-function updateFontSize(v) {
-  document.getElementById('p-size-val').textContent = v;
-  const obj = fc.getActiveObject();
-  if (obj && obj.set) { obj.set('fontSize', parseInt(v)); fc.renderAll(); }
-}
-function updateColor(v) {
-  const obj = fc.getActiveObject();
-  if (obj && obj.set) { obj.set('fill', v); fc.renderAll(); }
-}
-
-fc.on('selection:created',  e => showProps(e.selected[0]));
-fc.on('selection:updated',  e => showProps(e.selected[0]));
-fc.on('selection:cleared',  ()=> hideProps());
-fc.on('object:modified',    e => showProps(e.target));
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Extract Recipe
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function extractRecipe() {
-  const elements = [];
-  fc.getObjects().forEach(obj => {
-    const type = obj.elementType;
-    if (!type || type === 'bg' || type === 'gradient') return;
-
-    if (type === 'headline' || type === 'subline') {
-      elements.push({ type,
-        text:   obj.text || '',
-        left:   obj.left,  top: obj.top,
-        scaleX: obj.scaleX, scaleY: obj.scaleY,
-        angle:  obj.angle || 0,
-        fontSize: obj.fontSize,
-        fill:   obj.fill || '#ffffff',
-        width:  obj.width
-      });
-    } else if (type === 'logo') {
-      elements.push({ type,
-        left: obj.left, top: obj.top,
-        scaleX: obj.scaleX, scaleY: obj.scaleY, angle: obj.angle || 0,
-        width: obj.width, height: obj.height
-      });
-    } else if (type === 'magnifier') {
-      // Group 내 Circle 찾기
-      const circle = obj.getObjects ? obj.getObjects('circle')[0] : obj;
-      const r = circle ? circle.radius * Math.max(obj.scaleX || 1, obj.scaleY || 1) : 70;
-      elements.push({ type, left: obj.left, top: obj.top, radius: r });
-    }
-  });
-  return { session_id: SESSION_ID, canvas: { width: CW, height: CH }, elements };
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Publish
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function publishCard() {
-  const btn    = document.getElementById('pub-btn');
-  const recipe = extractRecipe();
-  const json   = JSON.stringify(recipe);
-
-  if (json.length > 4000) { toast('⚠️ 텍스트가 너무 깁니다. 줄여주세요.'); return; }
-
-  btn.disabled = true; btn.textContent = '전송 중...';
-
-  if (tg && tg.sendData) {
-    try { tg.sendData(json); }
-    catch(e) { toast('전송 실패: ' + e.message); btn.disabled=false; btn.textContent='🚀 최종 발행'; }
-  } else {
-    // dev fallback: POST to backend
-    fetch(`/session/${SESSION_ID}/render`, {
-      method:'POST', headers:{'Content-Type':'application/json'}, body:json
-    }).then(r => {
-      if (r.ok) return r.blob();
-      throw new Error(`HTTP ${r.status}`);
-    }).then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement('a');
-      a.href=url; a.download='card.jpg'; a.click();
-      toast('✅ 렌더링 완료 (개발 환경)');
-    }).catch(e => {
-      toast('❌ 오류: ' + e.message);
-    }).finally(() => {
-      btn.disabled=false; btn.textContent='🚀 최종 발행';
+    const fc = new fabric.Canvas('c', {
+      width: CW, height: CH, backgroundColor: '#111', preserveObjectStacking: true
     });
-  }
-}
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Toast
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-let _toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(()=>el.classList.remove('show'), 2800);
-}
+    const EL = {};  // headline, subline, logo, magnifier
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Init
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-loadBg();
-</script>
+    // ── Load Background Image (CORS safe) ────────────────────────────
+    function loadBg() {
+      if (!IMG) {
+        // No image param — show dark gradient placeholder
+        addGradient();
+        addElements();
+        hide();
+        return;
+      }
+
+      document.getElementById('ld-msg').textContent = '이미지 로딩 중...';
+
+      /*
+       * crossOrigin: 'anonymous' → 브라우저가 CORS 요청으로 이미지 로드.
+       * Telegraph CDN (telegra.ph) 는 Access-Control-Allow-Origin: * 헤더를 제공하므로
+       * Canvas Tainting 없이 안전하게 사용 가능.
+       */
+      fabric.Image.fromURL(
+        IMG,
+        (img, err) => {
+          if (err || !img || !img.width) {
+            toast('⚠️ 이미지 로드 실패 — 빈 배경으로 시작합니다');
+          } else {
+            // Contain fit (메인 이미지만 표시, Pillow의 블러 BG는 렌더링 시 자동 추가)
+            const sc = Math.min(CW / img.width, CH / img.height);
+            img.set({
+              left: (CW - img.width * sc) / 2,
+              top: (CH - img.height * sc) / 2,
+              scaleX: sc, scaleY: sc,
+              selectable: false, evented: false,
+              elementType: 'bg',
+              crossOrigin: 'anonymous'   // ← CORS 속성 명시
+            });
+            fc.add(img);
+            fc.sendToBack(img);
+          }
+          addGradient();
+          addElements();
+          hide();
+        },
+        { crossOrigin: 'anonymous' }     // ← fromURL 옵션에도 반드시 지정
+      );
+    }
+
+    function hide() {
+      document.getElementById('ld').classList.add('hide');
+    }
+
+    // ── Gradient Overlay ─────────────────────────────────────────────
+    function addGradient() {
+      const h = CH * 0.45;
+      fc.add(new fabric.Rect({
+        left: 0, top: CH - h, width: CW, height: h,
+        fill: new fabric.Gradient({
+          type: 'linear', gradientUnits: 'pixels',
+          coords: { x1: 0, y1: 0, x2: 0, y2: h },
+          colorStops: [
+            { offset: 0, color: 'rgba(0,0,0,0)' },
+            { offset: 0.5, color: 'rgba(0,0,0,0.6)' },
+            { offset: 1, color: 'rgba(0,0,0,0.92)' }
+          ]
+        }),
+        selectable: false, evented: false, elementType: 'gradient'
+      }));
+    }
+
+    // ── Text Elements ────────────────────────────────────────────────
+    function addElements() {
+      const hSize = Math.round(CW * 0.065);
+      const hl = new fabric.IText(TITLE, {
+        left: CW * 0.06, top: CH * 0.73, width: CW * 0.88,
+        fontSize: hSize, fontWeight: 'bold',
+        fontFamily: '-apple-system,Helvetica,Arial,sans-serif',
+        fill: '#ffffff', shadow: '2px 2px 5px rgba(0,0,0,.8)',
+        editable: true, selectable: true, elementType: 'headline'
+      });
+      EL.headline = hl; fc.add(hl);
+
+      const sSize = Math.round(CW * 0.040);
+      const sl = new fabric.IText(SUB, {
+        left: CW * 0.06, top: CH * 0.845, width: CW * 0.88,
+        fontSize: sSize,
+        fontFamily: '-apple-system,Helvetica,Arial,sans-serif',
+        fill: '#e0e0e0', shadow: '1px 1px 3px rgba(0,0,0,.8)',
+        editable: true, selectable: true, elementType: 'subline'
+      });
+      EL.subline = sl; fc.add(sl);
+
+      addMag();
+    }
+
+    // ── Magnifier ────────────────────────────────────────────────────
+    function addMag() {
+      const r = Math.round(CW * 0.13);
+      const circle = new fabric.Circle({
+        radius: r, fill: 'rgba(255,255,255,0.08)',
+        stroke: '#fff', strokeWidth: 2, strokeDashArray: [5, 4]
+      });
+      const label = new fabric.Text('돋보기', {
+        fontSize: Math.round(r * 0.38), fill: 'rgba(255,255,255,0.7)',
+        originX: 'center', originY: 'center', left: r, top: r
+      });
+      const g = new fabric.Group([circle, label], {
+        left: CW - r * 2 - CW * 0.05, top: CH - r * 2 - CH * 0.05,
+        selectable: true, elementType: 'magnifier'
+      });
+      EL.magnifier = g; fc.add(g);
+    }
+
+    // ── Canvas Events ─────────────────────────────────────────────────
+    fc.on('selection:created', e => showProps(e.selected[0]));
+    fc.on('selection:updated', e => showProps(e.selected[0]));
+    fc.on('selection:cleared', () => hideProps());
+
+    function showProps(obj) {
+      if (!obj) return;
+      const t = obj.elementType;
+      const txt = t === 'headline' || t === 'subline';
+      document.getElementById('r-txt').style.display = txt ? 'flex' : 'none';
+      document.getElementById('r-sz').style.display = txt ? 'flex' : 'none';
+      document.getElementById('r-col').style.display = txt ? 'flex' : 'none';
+      if (txt) {
+        document.getElementById('p-txt').value = obj.text || '';
+        const fs = Math.round(obj.fontSize || 36);
+        document.getElementById('p-sz').value = fs;
+        document.getElementById('p-sz-v').textContent = fs;
+        document.getElementById('p-col').value = obj.fill || '#ffffff';
+      }
+      document.getElementById('props').classList.add('show');
+      document.getElementById('hint').textContent = t || '선택됨';
+    }
+    function hideProps() {
+      document.getElementById('props').classList.remove('show');
+      document.getElementById('hint').textContent = '요소를 선택하여 편집';
+    }
+
+    // ── Toolbar ───────────────────────────────────────────────────────
+    function sel(type) {
+      const o = EL[type]; if (o) { fc.setActiveObject(o); fc.renderAll(); }
+    }
+    function tog(type) {
+      const o = EL[type]; if (!o) return;
+      o.visible = !o.visible; fc.renderAll();
+      const id = type === 'magnifier' ? 'btn-mag' : 'btn-logo';
+      document.getElementById(id)?.classList.toggle('on', o.visible);
+    }
+    function del() {
+      const o = fc.getActiveObject(); if (!o) return;
+      const t = o.elementType;
+      if (t === 'bg' || t === 'gradient') { toast('배경은 삭제 불가'); return; }
+      fc.remove(o); if (t in EL) delete EL[t]; hideProps(); fc.renderAll();
+    }
+    function reset() {
+      if (!confirm('초기화할까요?')) return;
+      fc.clear(); fc.backgroundColor = '#111';
+      Object.keys(EL).forEach(k => delete EL[k]);
+      loadBg();
+    }
+
+    // ── Props Controls ────────────────────────────────────────────────
+    function upTxt() {
+      const o = fc.getActiveObject();
+      if (o?.set) { o.set('text', document.getElementById('p-txt').value); fc.renderAll(); }
+    }
+    function upSz(v) {
+      document.getElementById('p-sz-v').textContent = v;
+      const o = fc.getActiveObject();
+      if (o?.set) { o.set('fontSize', parseInt(v)); fc.renderAll(); }
+    }
+    function upCol(v) {
+      const o = fc.getActiveObject();
+      if (o?.set) { o.set('fill', v); fc.renderAll(); }
+    }
+
+    // ── Extract Recipe ────────────────────────────────────────────────
+    function recipe() {
+      const elements = [];
+      fc.getObjects().forEach(obj => {
+        const t = obj.elementType;
+        if (!t || t === 'bg' || t === 'gradient') return;
+        if (t === 'headline' || t === 'subline') {
+          elements.push({
+            type: t, text: obj.text || '',
+            left: obj.left, top: obj.top,
+            scaleX: obj.scaleX, scaleY: obj.scaleY,
+            angle: obj.angle || 0, fontSize: obj.fontSize,
+            fill: obj.fill || '#ffffff', width: obj.width
+          });
+        } else if (t === 'logo') {
+          elements.push({
+            type: t, left: obj.left, top: obj.top,
+            scaleX: obj.scaleX, scaleY: obj.scaleY,
+            angle: obj.angle || 0, width: obj.width, height: obj.height
+          });
+        } else if (t === 'magnifier') {
+          const c2 = obj.getObjects ? obj.getObjects('circle')[0] : obj;
+          const r = c2 ? c2.radius * Math.max(obj.scaleX || 1, obj.scaleY || 1) : 70;
+          elements.push({ type: t, left: obj.left, top: obj.top, radius: r });
+        }
+      });
+      return { canvas: { width: CW, height: CH }, elements };
+    }
+
+    // ── Publish ───────────────────────────────────────────────────────
+    function publish() {
+      const btn = document.getElementById('pub');
+      const data = JSON.stringify(recipe());
+
+      if (data.length > 4000) { toast('⚠️ 데이터가 너무 큽니다. 텍스트를 줄여주세요.'); return; }
+
+      btn.disabled = true; btn.textContent = '전송 중...';
+
+      if (tg?.sendData) {
+        try {
+          tg.sendData(data);
+          // sendData 후 Mini App은 자동으로 닫힘
+        } catch (e) {
+          toast('전송 실패: ' + e.message);
+          btn.disabled = false; btn.textContent = '🚀 최종 발행';
+        }
+      } else {
+        // ── 개발용 fallback: 콘솔에 출력 ──
+        console.log('[DEV] Recipe JSON:', data);
+        toast('✅ 개발 환경: 레시피가 콘솔에 출력되었습니다');
+        btn.disabled = false; btn.textContent = '🚀 최종 발행';
+      }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────
+    let _tt;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg; el.classList.add('show');
+      clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    loadBg();
+  </script>
 </body>
+
 </html>
