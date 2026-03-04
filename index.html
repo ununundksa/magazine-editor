@@ -3,16 +3,38 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-  <title>0.1% 매거진 스튜디오 v3</title>
+  <!-- ── PWA / iOS Native ── -->
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="0.1% Studio">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+  <title>0.1% 매거진 스튜디오 v4</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" crossorigin="anonymous"></script>
   <style>
+    /* ━━ Reset & Touch Defense ━━ */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent
+    }
+
+    html {
+      overscroll-behavior: none;
+      touch-action: pan-x pan-y
+    }
+
+    body {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none
     }
 
     :root {
@@ -21,27 +43,27 @@
       --sur2: #2c2c2e;
       --bd: #3a3a3c;
       --txt: #fff;
-      --mut: #98989d;
+      --mut: #8e8e93;
       --acc: #0a84ff;
       --dan: #ff453a;
       --grn: #30d158;
-      --r: 10px;
+      --warn: #ffd60a;
+      --safe-bot: env(safe-area-inset-bottom, 0px);
     }
 
     html,
     body {
       height: 100%;
-      overflow: hidden;
       background: var(--bg);
       color: var(--txt);
-      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif
+      font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif
     }
 
     #app {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh
+      height: 100svh
     }
 
     /* ── Header ── */
@@ -50,68 +72,78 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 14px;
+      padding: 8px 12px;
       background: var(--sur);
-      border-bottom: 1px solid var(--bd)
+      border-bottom: 1px solid var(--bd);
+      padding-top: max(8px, env(safe-area-inset-top))
     }
 
     .logo {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700
     }
 
-    .logo span {
-      color: var(--acc)
+    .logo em {
+      color: var(--acc);
+      font-style: normal
     }
 
-    #act-btns {
+    #hdr-r {
       display: flex;
-      gap: 6px
+      gap: 5px
     }
 
-    .hbtn {
-      padding: 5px 10px;
+    .hb {
+      padding: 5px 9px;
       background: var(--sur2);
       border: 1px solid var(--bd);
       border-radius: 7px;
       color: var(--txt);
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
-      font-family: inherit
+      font-family: inherit;
+      transition: .12s;
+      white-space: nowrap
     }
 
-    .hbtn:active {
-      opacity: .7
+    .hb:active {
+      opacity: .65
     }
 
-    .hbtn.dn {
+    .hb.dn {
       color: var(--dan)
+    }
+
+    .hb.acc {
+      background: var(--acc);
+      border-color: var(--acc)
     }
 
     /* ── Workspace ── */
     #ws {
       flex: 1;
+      min-height: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 18px;
+      padding: 14px;
       overflow: hidden;
-      background: #080808;
+      background: #070707;
       position: relative
     }
 
-    #canvas-wrap {
+    #cwrap {
       position: relative;
-      border-radius: 7px;
-      box-shadow: 0 16px 64px rgba(0, 0, 0, .95), 0 0 0 1px rgba(255, 255, 255, .06)
+      border-radius: 8px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, .95), 0 0 0 1px rgba(255, 255, 255, .055)
     }
 
     canvas {
       display: block;
-      border-radius: 7px
+      border-radius: 8px
     }
 
-    /* ── Snap guide lines (dashed) ── */
+    /* ── Dashed Snap Lines ── */
     .snap {
       position: absolute;
       pointer-events: none;
@@ -125,7 +157,7 @@
       width: 2px;
       left: 50%;
       transform: translateX(-50%);
-      background: repeating-linear-gradient(to bottom, #0a84ff 0, #0a84ff 5px, transparent 5px, transparent 11px)
+      background: repeating-linear-gradient(to bottom, var(--acc) 0, var(--acc) 5px, transparent 5px, transparent 11px)
     }
 
     #sg-h {
@@ -134,7 +166,7 @@
       height: 2px;
       top: 50%;
       transform: translateY(-50%);
-      background: repeating-linear-gradient(to right, #0a84ff 0, #0a84ff 5px, transparent 5px, transparent 11px)
+      background: repeating-linear-gradient(to right, var(--acc) 0, var(--acc) 5px, transparent 5px, transparent 11px)
     }
 
     /* ── Bottom Sheet ── */
@@ -144,7 +176,7 @@
       border-top: 1px solid var(--bd)
     }
 
-    /* Panel slides up */
+    /* Sliding panel with cubic-bezier */
     #panel {
       max-height: 0;
       overflow: hidden;
@@ -152,15 +184,16 @@
     }
 
     #panel.open {
-      max-height: 280px;
-      transition: max-height .35s cubic-bezier(.33, 1, .68, 1)
+      max-height: 260px;
+      transition: max-height .36s cubic-bezier(.33, 1, .68, 1)
     }
 
     .sub-panel {
       display: none;
       padding: 12px 14px;
       overflow-y: auto;
-      max-height: 280px
+      max-height: 260px;
+      -webkit-overflow-scrolling: touch
     }
 
     .sub-panel.active {
@@ -171,20 +204,21 @@
     #tabbar {
       display: flex;
       gap: 5px;
-      padding: 7px 10px;
+      padding: 7px 12px;
+      background: var(--sur);
       border-bottom: 1px solid var(--bd)
     }
 
     .tab {
       flex: 1;
-      padding: 7px 2px;
+      padding: 8px 2px;
       background: var(--sur2);
       border: 1px solid var(--bd);
       border-radius: 8px;
       color: var(--mut);
       font-size: 11px;
       cursor: pointer;
-      transition: .13s;
+      transition: .12s;
       font-family: inherit;
       white-space: nowrap
     }
@@ -201,16 +235,18 @@
 
     /* Publish row */
     #bot {
-      padding: 8px 14px;
-      padding-bottom: max(8px, env(safe-area-inset-bottom))
+      display: flex;
+      gap: 6px;
+      padding: 7px 12px;
+      padding-bottom: max(7px, var(--safe-bot))
     }
 
     #pub {
-      width: 100%;
+      flex: 1;
       padding: 12px;
       background: var(--acc);
       border: none;
-      border-radius: var(--r);
+      border-radius: 10px;
       color: #fff;
       font-size: 15px;
       font-weight: 600;
@@ -220,8 +256,7 @@
     }
 
     #pub:active {
-      transform: scale(.98);
-      opacity: .9
+      transform: scale(.98)
     }
 
     #pub:disabled {
@@ -229,26 +264,42 @@
       color: var(--mut)
     }
 
-    /* Panel rows */
-    .ptitle {
-      font-size: 12px;
-      color: var(--mut);
-      font-weight: 600;
-      letter-spacing: .5px;
-      margin-bottom: 9px;
-      text-transform: uppercase
+    #btn-hq {
+      padding: 12px 14px;
+      background: var(--sur2);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      color: var(--txt);
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap
     }
 
-    .block-title {
-      font-size: 11px;
+    #btn-hq:active {
+      opacity: .7
+    }
+
+    /* Panel UI */
+    .ptitle {
+      font-size: 10px;
+      color: var(--mut);
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      margin-bottom: 10px
+    }
+
+    .bttl {
+      font-size: 10px;
       color: var(--acc);
       font-weight: 600;
-      margin: 10px 0 6px;
+      margin: 9px 0 5px;
       padding-top: 8px;
       border-top: 1px solid var(--bd)
     }
 
-    .block-title:first-child {
+    .bttl:first-of-type {
       margin-top: 0;
       padding-top: 0;
       border-top: none
@@ -268,7 +319,7 @@
     .pr label {
       font-size: 10px;
       color: var(--mut);
-      min-width: 46px;
+      min-width: 44px;
       flex-shrink: 0
     }
 
@@ -290,46 +341,45 @@
 
     .pi[type=range] {
       padding: 0;
-      height: 26px
+      height: 25px
     }
 
     .pi[type=color] {
-      height: 32px;
+      height: 30px;
       padding: 2px;
       cursor: pointer
     }
 
     .pv {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--mut);
-      min-width: 30px;
+      min-width: 32px;
       text-align: right
     }
 
     .fbtn {
       flex: 1;
-      padding: 8px;
+      padding: 7px;
       background: var(--sur2);
       border: 1px solid var(--bd);
-      border-radius: 8px;
+      border-radius: 7px;
       color: var(--txt);
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
       text-align: center;
       font-family: inherit
     }
 
     .fbtn:active {
-      opacity: .7
+      opacity: .65
     }
 
-    /* Sel-style callout */
-    #r-sel {
+    .sel-box {
       display: none;
-      margin-top: 10px;
-      padding: 9px 10px;
-      background: rgba(10, 132, 255, .12);
-      border: 1px solid rgba(10, 132, 255, .35);
+      margin-top: 8px;
+      padding: 9px;
+      background: rgba(10, 132, 255, .1);
+      border: 1px solid rgba(10, 132, 255, .3);
       border-radius: 8px
     }
 
@@ -337,12 +387,12 @@
     #ld {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .95);
+      background: rgba(0, 0, 0, .96);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 999;
+      z-index: 9999;
       transition: .3s
     }
 
@@ -352,8 +402,8 @@
     }
 
     .sp {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border: 3px solid var(--bd);
       border-top-color: var(--acc);
       border-radius: 50%;
@@ -366,28 +416,28 @@
       }
     }
 
-    #ld-msg {
+    #ld p {
       margin-top: 12px;
       color: var(--mut);
-      font-size: 13px
+      font-size: 12px
     }
 
     /* Toast */
     #toast {
       position: fixed;
-      bottom: 80px;
+      bottom: 88px;
       left: 50%;
-      transform: translateX(-50%) translateY(8px);
+      transform: translateX(-50%) translateY(6px);
       background: var(--sur2);
       border: 1px solid var(--bd);
       border-radius: 8px;
-      padding: 8px 14px;
+      padding: 7px 13px;
       font-size: 12px;
       opacity: 0;
       transition: .22s;
       pointer-events: none;
       white-space: nowrap;
-      z-index: 998
+      z-index: 9998
     }
 
     #toast.show {
@@ -402,26 +452,27 @@
 </head>
 
 <body>
-
   <div id="ld">
     <div class="sp"></div>
-    <p id="ld-msg">스튜디오 v3 로딩 중...</p>
+    <p id="ld-p">V4 로딩 중...</p>
   </div>
 
   <div id="app">
     <!-- Header -->
     <div id="hdr">
-      <div class="logo">[<span>0.1%</span>] Studio <span
-          style="color:var(--mut);font-weight:400;font-size:12px">v3</span></div>
-      <div id="act-btns">
-        <button class="hbtn dn" onclick="delSel()">✕ 삭제</button>
-        <button class="hbtn" onclick="doReset()">↺ 초기화</button>
+      <div class="logo">[<em>0.1%</em>] Studio <span style="color:var(--mut);font-size:10px">v4</span></div>
+      <div id="hdr-r">
+        <button class="hb" onclick="doUndo()" title="실행취소">↩</button>
+        <button class="hb" onclick="doRedo()" title="다시실행">↪</button>
+        <button class="hb" onclick="selTypo()">↕ 텍스트</button>
+        <button class="hb dn" onclick="delSel()">✕</button>
+        <button class="hb" onclick="doReset()">↺</button>
       </div>
     </div>
 
-    <!-- Floating Canvas Workspace -->
+    <!-- Canvas Workspace -->
     <div id="ws">
-      <div id="canvas-wrap">
+      <div id="cwrap">
         <div id="sg-v" class="snap"></div>
         <div id="sg-h" class="snap"></div>
         <canvas id="c"></canvas>
@@ -430,22 +481,33 @@
 
     <!-- Bottom Sheet -->
     <div id="sheet">
-      <!-- Sliding Panel -->
       <div id="panel">
-        <!-- ── TEXT PANEL ── -->
+
+        <!-- ══ TEXT PANEL ══ -->
         <div id="p-text" class="sub-panel">
-          <div class="ptitle">✦ 텍스트 편집</div>
-          <div class="block-title">대제목</div>
+          <div class="ptitle">✦ 타이포그래피</div>
+          <div class="bttl">대제목</div>
           <div class="pr"><label>내용</label><input class="pi" id="t-hl" type="text" oninput="upHl(this.value)"
               placeholder="헤드라인"></div>
           <div class="pr">
             <label>크기</label>
-            <input class="pi" type="range" id="t-hl-sz" min="8" max="120" value="44" oninput="upHlSz(this.value)">
+            <input class="pi" type="range" id="t-hl-sz" min="10" max="120" value="44" oninput="upHlSz(this.value)">
             <span class="pv" id="t-hl-sz-v">44</span>
           </div>
           <div class="pr"><label>색상</label><input class="pi" type="color" id="t-hl-col" value="#ffffff"
               oninput="upHlCol(this.value)"></div>
-          <div class="block-title">소제목</div>
+          <div class="pr">
+            <label>자간</label>
+            <input class="pi" type="range" id="t-cs" min="-200" max="800" step="10" value="0"
+              oninput="upCS(this.value)">
+            <span class="pv" id="t-cs-v">0</span>
+          </div>
+          <div class="pr">
+            <label>행간</label>
+            <input class="pi" type="range" id="t-lh" min="60" max="250" step="5" value="120" oninput="upLH(this.value)">
+            <span class="pv" id="t-lh-v">1.2</span>
+          </div>
+          <div class="bttl">소제목</div>
           <div class="pr"><label>내용</label><input class="pi" id="t-sl" type="text" oninput="upSl(this.value)"
               placeholder="서브라인"></div>
           <div class="pr">
@@ -460,11 +522,9 @@
             <input class="pi" type="range" id="t-op" min="0" max="100" value="100" oninput="upTypoOp(this.value)">
             <span class="pv" id="t-op-v">100%</span>
           </div>
-          <!-- Selection-level styles (Rich Text) -->
-          <div id="r-sel">
-            <div style="font-size:10px;color:var(--acc);font-weight:600;margin-bottom:7px">
-              ✦ 선택된 텍스트 편집 중
-            </div>
+          <!-- Rich Text Selection Area -->
+          <div class="sel-box" id="r-sel">
+            <div style="font-size:10px;color:var(--acc);font-weight:700;margin-bottom:7px">✦ 선택 텍스트 스타일</div>
             <div class="pr"><label>색상</label><input class="pi" type="color" id="sel-col" value="#ffea00"
                 oninput="upSelCol(this.value)"></div>
             <div class="pr">
@@ -475,12 +535,14 @@
           </div>
         </div>
 
-        <!-- ── PIP PANEL ── -->
+        <!-- ══ PiP PANEL ══ -->
         <div id="p-pip" class="sub-panel">
           <div class="ptitle">⊕ PiP 원형 인서트</div>
-          <div class="pr"><button class="fbtn" onclick="trigPip()">📎 이미지 업로드</button></div>
+          <div class="pr">
+            <button class="fbtn" onclick="trigPip()">📎 이미지 업로드</button>
+          </div>
           <div id="pip-ctrls" style="display:none">
-            <div class="block-title">테두리 설정</div>
+            <div class="bttl">테두리</div>
             <div class="pr">
               <label>두께</label>
               <input class="pi" type="range" id="pip-sw" min="0" max="24" value="4" oninput="updPipSW(this.value)">
@@ -488,6 +550,25 @@
             </div>
             <div class="pr"><label>색상</label><input class="pi" type="color" id="pip-sc" value="#ffffff"
                 oninput="updPipSC(this.value)"></div>
+            <div class="bttl">내부 이미지 패닝/크롭</div>
+            <div class="pr">
+              <label>X 이동</label>
+              <input class="pi" type="range" id="pip-px" min="-120" max="120" value="0"
+                oninput="updPipPanX(this.value)">
+              <span class="pv" id="pip-px-v">0</span>
+            </div>
+            <div class="pr">
+              <label>Y 이동</label>
+              <input class="pi" type="range" id="pip-py" min="-120" max="120" value="0"
+                oninput="updPipPanY(this.value)">
+              <span class="pv" id="pip-py-v">0</span>
+            </div>
+            <div class="pr">
+              <label>줌</label>
+              <input class="pi" type="range" id="pip-zm" min="100" max="400" value="100" step="5"
+                oninput="updPipZoom(this.value)">
+              <span class="pv" id="pip-zm-v">1.0×</span>
+            </div>
             <div class="pr">
               <label>투명도</label>
               <input class="pi" type="range" id="pip-op" min="0" max="100" value="100" oninput="updPipOp(this.value)">
@@ -496,22 +577,27 @@
           </div>
         </div>
 
-        <!-- ── LOGO PANEL ── -->
+        <!-- ══ LOGO & TEMPLATE PANEL ══ -->
         <div id="p-logo" class="sub-panel">
-          <div class="ptitle">◈ 로고 &amp; 배경</div>
-          <div class="pr"><button class="fbtn" onclick="trigLogo()">📎 로고 파일 업로드</button></div>
-          <div id="logo-ctrls">
-            <div class="block-title">로고 설정</div>
-            <div class="pr"><label>색상</label><input class="pi" type="color" id="logo-col" value="#ffffff"
-                oninput="updLogoCol(this.value)"></div>
-            <div class="pr">
-              <label>투명도</label>
-              <input class="pi" type="range" id="logo-op" min="0" max="100" value="90" oninput="updLogoOp(this.value)">
-              <span class="pv" id="logo-op-v">90%</span>
-            </div>
+          <div class="ptitle">◈ 로고 · 템플릿</div>
+          <div class="pr">
+            <button class="fbtn" onclick="trigLogo()">📎 로고 업로드</button>
+          </div>
+          <div class="bttl">로고 조절</div>
+          <div class="pr"><label>색상</label><input class="pi" type="color" id="logo-col" value="#ffffff"
+              oninput="updLogoCol(this.value)"></div>
+          <div class="pr">
+            <label>투명도</label>
+            <input class="pi" type="range" id="logo-op" min="0" max="100" value="90" oninput="updLogoOp(this.value)">
+            <span class="pv" id="logo-op-v">90%</span>
+          </div>
+          <div class="bttl">템플릿 관리</div>
+          <div class="pr">
+            <button class="fbtn" onclick="saveTemplate()">💾 템플릿 저장</button>
+            <button class="fbtn" onclick="loadTemplate()">📂 불러오기</button>
           </div>
         </div>
-      </div>
+      </div><!-- /#panel -->
 
       <!-- Tab bar -->
       <div id="tabbar">
@@ -521,19 +607,29 @@
       </div>
 
       <!-- Publish -->
-      <div id="bot"><button id="pub" onclick="publish()">🚀 최종 발행</button></div>
-    </div>
+      <div id="bot">
+        <button id="pub" onclick="publish()">🚀 발행</button>
+        <button id="btn-hq" onclick="hqExport()">💾 HQ</button>
+      </div>
+    </div><!-- /#sheet -->
   </div>
   <div id="toast"></div>
 
-  <!-- Hidden file inputs -->
   <input type="file" id="fi-pip" accept="image/*" onchange="loadPip(this)">
   <input type="file" id="fi-logo" accept="image/*" onchange="loadLogo(this)">
 
   <script>
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Telegram + URL params
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    'use strict';
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Touch Defence — prevent pinch-zoom / rubber-band
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+    document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Telegram
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.ready(); tg.expand(); tg.enableClosingConfirmation(); }
     const P = new URLSearchParams(location.search);
@@ -541,87 +637,140 @@
     const TITLE = decodeURIComponent(P.get('title') || '헤드라인을 입력하세요');
     const SUB = decodeURIComponent(P.get('sub') || '서브라인을 입력하세요');
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Canvas sizing — 4:5, padded
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Canvas — dynamic sizing (accounts for max panel height)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const RATIO = 1350 / 1080;
+    const MAX_PNL = 260;   // max panel height (matches CSS max-height)
     const wsEl = document.getElementById('ws');
-    const CW = Math.min(wsEl.clientWidth - 36, 460);
+    const HDR_H = 48;
+    const TAB_H = 50;
+    const BOT_H = 52;
+    const CHROME = HDR_H + TAB_H + BOT_H + MAX_PNL + 28; // total chrome when open
+    const WS_H = window.innerHeight - CHROME;           // available canvas area height
+    const CW = Math.min(wsEl.clientWidth - 28, Math.floor(WS_H / RATIO));
     const CH = Math.round(CW * RATIO);
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Fabric.js Canvas
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const fc = new fabric.Canvas('c', {
-      width: CW, height: CH,
-      backgroundColor: '#111',
-      preserveObjectStacking: true,
-      selection: true,
+      width: CW, height: CH, backgroundColor: '#111',
+      preserveObjectStacking: true, selection: true,
     });
 
-    // Global round controls
+    // ── Global control styles ─────────────────────────────────────────
     fabric.Object.prototype.set({
-      cornerStyle: 'circle',
-      cornerSize: 14,
-      cornerColor: '#ffffff',
-      cornerStrokeColor: '#0a84ff',
-      borderColor: '#0a84ff',
-      borderScaleFactor: 2,
-      transparentCorners: false,
-      padding: 5,
+      cornerStyle: 'circle', cornerSize: 13,
+      cornerColor: '#fff', cornerStrokeColor: '#0a84ff',
+      borderColor: '#0a84ff', borderScaleFactor: 2,
+      transparentCorners: false, padding: 5,
     });
 
-    // ── Object registry ─────────────────────────────────────
-    let typoGroup = null;
-    let logoObj = null;
-    const pipImgs = [];   // pip_img objects (with ._linkedBorder)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Object Registry
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let HL = null;   // fabric.Textbox — headline
+    let SL = null;   // fabric.Textbox — subline
+    let logoObj = null;   // fabric.Image   — logo
+    const PIPS = [];     // [{img, border}]
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Tab / Bottom Sheet
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    let _activeTab = null;
-    let _panelOpen = false;
-
-    function openTab(tab) {
-      if (_activeTab === tab && _panelOpen) { closePanel(); return; }
-      _activeTab = tab;
-      _panelOpen = true;
-      document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('p-' + tab).classList.add('active');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-      document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('on');
-      document.getElementById('panel').classList.add('open');
-    }
-    function closePanel() {
-      _panelOpen = false;
-      document.getElementById('panel').classList.remove('open');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-    }
-    function autoTab(elementType) {
-      if (elementType === 'typo_group' || elementType === 'headline' || elementType === 'subline') {
-        openTab('text'); syncTextPanel();
-      } else if (elementType === 'pip_img') {
-        openTab('pip');
-        document.getElementById('pip-ctrls').style.display = 'block';
-      } else if (elementType === 'logo') {
-        openTab('logo');
-      }
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Z-Index Stack Enforcement
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const Z = { dimmer: 0, pip_img: 1, pip_border: 2, subline: 3, headline: 4, logo: 99 };
+    function reStack() {
+      const objs = [...fc.getObjects()].sort((a, b) => {
+        const za = Z[a.elementType] ?? 50;
+        const zb = Z[b.elementType] ?? 50;
+        return za - zb;
+      });
+      fc._objects = objs;
+      fc.requestRenderAll();
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 1 · Cover Background
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // State Management — Undo/Redo + localStorage
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const UNDO_MAX = 20;
+    const STORE_KEY = 'studio_v4_state';
+    let _undo = [], _redo = [], _suspendSave = false;
+
+    const CUSTOM_PROPS = ['elementType', '_panX', '_panY', '_zoom', '_baseScale', '_clipCX', '_clipCY'];
+
+    function captureJSON() {
+      return JSON.stringify(fc.toJSON(CUSTOM_PROPS));
+    }
+
+    function saveState() {
+      if (_suspendSave) return;
+      const s = captureJSON();
+      _undo.push(s);
+      if (_undo.length > UNDO_MAX) _undo.shift();
+      _redo = [];
+      try { localStorage.setItem(STORE_KEY, s); } catch (e) { }
+    }
+
+    function restoreJSON(s, cb) {
+      _suspendSave = true;
+      fc.loadFromJSON(JSON.parse(s), () => {
+        fc.renderAll();
+        syncRefs();
+        reStack();
+        _suspendSave = false;
+        if (cb) cb();
+      });
+    }
+
+    function doUndo() {
+      if (_undo.length < 2) { toast('더 이상 되돌릴 수 없습니다'); return; }
+      _redo.push(_undo.pop());
+      restoreJSON(_undo[_undo.length - 1]);
+    }
+    function doRedo() {
+      if (!_redo.length) { toast('다시 실행할 항목이 없습니다'); return; }
+      const s = _redo.pop();
+      _undo.push(s);
+      restoreJSON(s);
+    }
+
+    function syncRefs() {
+      const objs = fc.getObjects();
+      HL = objs.find(o => o.elementType === 'headline') || null;
+      SL = objs.find(o => o.elementType === 'subline') || null;
+      logoObj = objs.find(o => o.elementType === 'logo') || null;
+      PIPS.length = 0;
+      const borders = objs.filter(o => o.elementType === 'pip_border');
+      const imgs = objs.filter(o => o.elementType === 'pip_img');
+      imgs.forEach(img => {
+        const b = borders.find(b =>
+          Math.abs(b.left - (img._clipCX || 0)) < 20 &&
+          Math.abs(b.top - (img._clipCY || 0)) < 20
+        );
+        if (b) {
+          b._img = img; img._border = b;
+          attachPipMoveEvent(b, img);
+          PIPS.push({ img, border: b });
+        }
+      });
+      updateTextPanel();
+    }
+
+    // Auto-save on changes
+    ['object:modified', 'object:added', 'object:removed'].forEach(ev => {
+      fc.on(ev, saveState);
+    });
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Cover Background
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function loadBgCover(url, cb) {
       if (!url) { cb(); return; }
-      ldMsg('배경 이미지 로딩 중...');
+      ldTxt('배경 로딩...');
       fabric.Image.fromURL(url, (img, err) => {
-        if (!err && img && img.width) {
+        if (!err && img?.width) {
           const sc = Math.max(CW / img.width, CH / img.height);
-          const ox = (CW - img.width * sc) / 2;
-          const oy = (CH - img.height * sc) / 2;
           fc.setBackgroundImage(img, () => {
             img.set({
-              scaleX: sc, scaleY: sc, left: ox, top: oy,
+              scaleX: sc, scaleY: sc,
+              left: (CW - img.width * sc) / 2, top: (CH - img.height * sc) / 2,
               originX: 'left', originY: 'top'
             });
             fc.renderAll(); cb();
@@ -630,9 +779,9 @@
       }, { crossOrigin: 'anonymous' });
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 2 · Dimmer + Typo Group
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Dimmer + Typography (Textbox)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function addDimmer() {
       const h = CH * 0.52;
       fc.add(new fabric.Rect({
@@ -643,54 +792,58 @@
           colorStops: [
             { offset: 0, color: 'rgba(0,0,0,0)' },
             { offset: 0.45, color: 'rgba(0,0,0,0.55)' },
-            { offset: 1, color: 'rgba(0,0,0,0.90)' },
+            { offset: 1, color: 'rgba(0,0,0,0.92)' },
           ]
         }),
         selectable: false, evented: false, elementType: 'dimmer',
       }));
     }
 
-    function addTypoGroup(title, sub) {
+    function addTypo(title, sub) {
       const hlSz = Math.round(CW * 0.068);
       const slSz = Math.round(CW * 0.042);
-      const hl = new fabric.IText(title, {
-        fontSize: hlSz, fontWeight: '700',
+      const PAD = Math.round(CW * 0.06);
+      const TW = Math.round(CW * 0.88);
+
+      HL = new fabric.Textbox(title, {
+        left: PAD, top: Math.round(CH * 0.775),
+        width: TW, fontSize: hlSz, fontWeight: '700',
         fontFamily: '-apple-system,Helvetica Neue,Arial,sans-serif',
-        fill: '#ffffff',
+        fill: '#ffffff', lineHeight: 1.2, charSpacing: 0,
         shadow: new fabric.Shadow({ color: 'rgba(0,0,0,.85)', blur: 10, offsetX: 1, offsetY: 2 }),
-        left: 0, top: 0, editable: true, elementType: 'headline', width: CW * 0.88,
+        selectable: true, editable: true, elementType: 'headline',
       });
-      const sl = new fabric.IText(sub, {
-        fontSize: slSz,
+      SL = new fabric.Textbox(sub, {
+        left: PAD, top: Math.round(CH * 0.775) + hlSz * 1.5 + 8,
+        width: TW, fontSize: slSz,
         fontFamily: '-apple-system,Helvetica Neue,Arial,sans-serif',
-        fill: '#dddddd',
+        fill: '#dddddd', lineHeight: 1.2, charSpacing: 0,
         shadow: new fabric.Shadow({ color: 'rgba(0,0,0,.75)', blur: 7, offsetX: 1, offsetY: 1 }),
-        left: 0, top: hlSz * 1.38 + 8, editable: true, elementType: 'subline', width: CW * 0.88,
+        selectable: true, editable: true, elementType: 'subline',
       });
-      typoGroup = new fabric.Group([hl, sl], {
-        left: CW * 0.06, top: CH * 0.77,
-        subTargetCheck: true, elementType: 'typo_group',
-      });
-      // Init panel values
-      document.getElementById('t-hl').value = title;
-      document.getElementById('t-hl-sz').value = hlSz;
-      document.getElementById('t-hl-sz-v').textContent = hlSz;
-      document.getElementById('t-sl').value = sub;
-      document.getElementById('t-sl-sz').value = slSz;
-      document.getElementById('t-sl-sz-v').textContent = slSz;
-      fc.add(typoGroup);
-      fc.bringToFront(typoGroup);
+      fc.add(SL); fc.add(HL);
+
+      // Init panel
+      el('t-hl').value = title;
+      el('t-sl').value = sub;
+      el('t-hl-sz').value = hlSz; el('t-hl-sz-v').textContent = hlSz;
+      el('t-sl-sz').value = slSz; el('t-sl-sz-v').textContent = slSz;
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 4 · Logo — auto-load logo_wb.jpg
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function selTypo() { // Select both headline and subline as a group
+      if (!HL || !SL) return;
+      const sel = new fabric.ActiveSelection([HL, SL], { canvas: fc });
+      fc.setActiveObject(sel); fc.renderAll();
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Logo — RemoveColor + BlendColor
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function applyLogoFilters(img, tint) {
       img.filters = [new fabric.Image.filters.RemoveColor({ color: '#000000', distance: 0.28 })];
-      if (tint && tint.toLowerCase() !== '#ffffff') {
-        img.filters.push(new fabric.Image.filters.BlendColor({
-          color: tint, mode: 'multiply', alpha: 1,
-        }));
+      const col = (tint || '#ffffff').toLowerCase();
+      if (col !== '#ffffff') {
+        img.filters.push(new fabric.Image.filters.BlendColor({ color: col, mode: 'multiply', alpha: 1 }));
       }
       img.applyFilters();
     }
@@ -699,20 +852,18 @@
       const sc = Math.min((CW * 0.32) / img.width, 1);
       img.set({
         scaleX: sc, scaleY: sc,
-        left: CW / 2, originX: 'center',
-        top: CH * 0.024,
+        left: CW / 2, originX: 'center', top: CH * 0.023,
         opacity: 0.9, elementType: 'logo',
+        selectable: false, evented: false,   // Z:99 lock, use panel controls only
       });
       if (logoObj) fc.remove(logoObj);
       logoObj = img;
-      fc.add(img);
-      if (typoGroup) fc.bringToFront(typoGroup);
-      fc.renderAll();
+      fc.add(img); reStack(); fc.renderAll();
     }
 
     function autoLoadLogo() {
       fabric.Image.fromURL('./logo_wb.jpg', (img, err) => {
-        if (err || !img || !img.width) return;  // fail silently
+        if (err || !img?.width) return;
         applyLogoFilters(img, '#ffffff');
         mountLogo(img);
       }, { crossOrigin: 'anonymous' });
@@ -725,306 +876,377 @@
       fabric.Image.fromURL(url, (img, err) => {
         URL.revokeObjectURL(url);
         if (err || !img) { toast('⚠️ 로고 로드 실패'); return; }
-        applyLogoFilters(img, document.getElementById('logo-col').value || '#ffffff');
-        mountLogo(img);
-        toast('✅ 로고 추가됨'); inp.value = '';
+        applyLogoFilters(img, el('logo-col').value || '#ffffff');
+        mountLogo(img); toast('✅ 로고 추가됨'); inp.value = '';
+        saveState();
       }, { crossOrigin: 'anonymous' });
     }
 
     function updLogoCol(v) {
       if (!logoObj) return;
-      applyLogoFilters(logoObj, v);
-      fc.renderAll();
+      applyLogoFilters(logoObj, v); fc.renderAll(); saveState();
     }
     function updLogoOp(v) {
-      document.getElementById('logo-op-v').textContent = v + '%';
-      if (logoObj) { logoObj.set('opacity', v / 100); fc.renderAll(); }
+      el('logo-op-v').textContent = v + '%';
+      if (logoObj) { logoObj.set('opacity', v / 100); fc.renderAll(); saveState(); }
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 3 · PiP Circular Insert
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PiP — absolutePositioned clip + inner pan/zoom
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function trigPip() { document.getElementById('fi-pip').click(); }
+
+    function attachPipMoveEvent(border, img) {
+      border.off('moving'); // remove previous to avoid duplicates
+      border.on('moving', function () {
+        const nx = this.left, ny = this.top;
+        // Update absolutePositioned clip
+        if (img.clipPath) { img.clipPath.left = nx; img.clipPath.top = ny; }
+        img._clipCX = nx; img._clipCY = ny;
+        img.set({ left: nx + (img._panX || 0), top: ny + (img._panY || 0) });
+        fc.renderAll();
+      });
+      border.on('modified', saveState);
+    }
 
     function loadPip(inp) {
       const file = inp.files[0]; if (!file) return;
       const url = URL.createObjectURL(file);
       const R = Math.round(CW * 0.15);
+      const cx = CW - R - Math.round(CW * 0.05);
+      const cy = CH - R - Math.round(CH * 0.04);
 
       fabric.Image.fromURL(url, (img, err) => {
         URL.revokeObjectURL(url);
         if (err || !img) { toast('⚠️ PiP 실패'); return; }
 
-        const minD = Math.min(img.width, img.height);
-        const sc = (R * 2) / minD;
+        const minDim = Math.min(img.width, img.height);
+        const baseScale = (R * 2) / minDim;
+
+        // absolutePositioned clip → image pans independently
+        const clip = new fabric.Circle({
+          radius: R, left: cx, top: cy,
+          originX: 'center', originY: 'center',
+          absolutePositioned: true,
+        });
 
         img.set({
-          scaleX: sc, scaleY: sc,
-          left: CW - R * 2 - CW * 0.05, top: CH - R * 2 - CH * 0.04,
-          originX: 'left', originY: 'top',
-          clipPath: new fabric.Circle({ radius: minD / 2, originX: 'center', originY: 'center' }),
+          left: cx, top: cy,
+          originX: 'center', originY: 'center',
+          scaleX: baseScale, scaleY: baseScale,
+          clipPath: clip,
           elementType: 'pip_img',
+          selectable: false, evented: false,   // moved only via border
+          _baseScale: baseScale, _clipCX: cx, _clipCY: cy,
+          _panX: 0, _panY: 0, _zoom: 1,
         });
 
         const border = new fabric.Circle({
           radius: R + 3, fill: 'transparent', stroke: '#ffffff', strokeWidth: 4,
-          left: img.left + R, top: img.top + R,
-          originX: 'center', originY: 'center',
-          selectable: false, evented: false, elementType: 'pip_border',
+          left: cx, top: cy, originX: 'center', originY: 'center',
+          elementType: 'pip_border',
         });
+        border._img = img; img._border = border;
+        attachPipMoveEvent(border, img);
 
-        img._border = border;
-
-        img.on('moving', function () {
-          border.set({ left: this.left + R, top: this.top + R }); fc.renderAll();
-        });
-        img.on('scaling', function () {
-          const curR = R * Math.max(this.scaleX, this.scaleY) / sc;
-          border.set({ radius: curR + 3, left: this.left + curR, top: this.top + curR });
-          fc.renderAll();
-        });
-
-        pipImgs.push(img);
-        fc.add(border);
-        fc.add(img);
-        if (typoGroup) fc.bringToFront(typoGroup);
-        fc.setActiveObject(img); fc.renderAll();
-        toast('✅ PiP 원형 추가됨'); inp.value = '';
+        PIPS.push({ img, border });
+        fc.add(img); fc.add(border);
+        reStack();
+        fc.setActiveObject(border);
+        fc.renderAll(); saveState();
+        toast('✅ PiP 추가됨'); inp.value = '';
+        openTab('pip');
+        el('pip-ctrls').style.display = 'block';
+        resetPipPanel();
       }, { crossOrigin: 'anonymous' });
     }
 
-    function updPipSW(v) {
-      document.getElementById('pip-sw-v').textContent = v;
+    function getActivePip() {
       const obj = fc.getActiveObject();
-      const b = obj?.elementType === 'pip_img' ? obj._border : null;
-      if (b) { b.set('strokeWidth', parseInt(v)); fc.renderAll(); }
+      if (!obj || obj.elementType !== 'pip_border') return null;
+      return obj._img || null;
+    }
+
+    function resetPipPanel() {
+      el('pip-px').value = 0; el('pip-px-v').textContent = '0';
+      el('pip-py').value = 0; el('pip-py-v').textContent = '0';
+      el('pip-zm').value = 100; el('pip-zm-v').textContent = '1.0×';
+      el('pip-op').value = 100; el('pip-op-v').textContent = '100%';
+      el('pip-sw').value = 4; el('pip-sw-v').textContent = '4';
+      el('pip-sc').value = '#ffffff';
+    }
+
+    function updPipSW(v) {
+      el('pip-sw-v').textContent = v;
+      const b = fc.getActiveObject(); if (!b || b.elementType !== 'pip_border') return;
+      b.set('strokeWidth', parseInt(v)); fc.renderAll();
     }
     function updPipSC(v) {
-      const obj = fc.getActiveObject();
-      const b = obj?.elementType === 'pip_img' ? obj._border : null;
-      if (b) { b.set('stroke', v); fc.renderAll(); }
+      const b = fc.getActiveObject(); if (!b || b.elementType !== 'pip_border') return;
+      b.set('stroke', v); fc.renderAll();
+    }
+    function updPipPanX(v) {
+      el('pip-px-v').textContent = v;
+      const img = getActivePip(); if (!img) return;
+      img._panX = parseInt(v);
+      img.set('left', img._clipCX + img._panX); fc.renderAll();
+    }
+    function updPipPanY(v) {
+      el('pip-py-v').textContent = v;
+      const img = getActivePip(); if (!img) return;
+      img._panY = parseInt(v);
+      img.set('top', img._clipCY + img._panY); fc.renderAll();
+    }
+    function updPipZoom(v) {
+      el('pip-zm-v').textContent = (v / 100).toFixed(1) + '×';
+      const img = getActivePip(); if (!img) return;
+      const z = v / 100;
+      img._zoom = z;
+      img.set({ scaleX: img._baseScale * z, scaleY: img._baseScale * z }); fc.renderAll();
     }
     function updPipOp(v) {
-      document.getElementById('pip-op-v').textContent = v + '%';
-      const obj = fc.getActiveObject();
-      if (obj?.elementType === 'pip_img') { obj.set('opacity', v / 100); fc.renderAll(); }
+      el('pip-op-v').textContent = v + '%';
+      const obj = fc.getActiveObject(); if (!obj || obj.elementType !== 'pip_border') return;
+      obj.set('opacity', v / 100);
+      if (obj._img) obj._img.set('opacity', v / 100);
+      fc.renderAll();
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Text Panel — helpers
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    function getHl() { return typoGroup?.getObjects().find(s => s.elementType === 'headline') || null; }
-    function getSl() { return typoGroup?.getObjects().find(s => s.elementType === 'subline') || null; }
-
-    function syncTextPanel() {
-      const hl = getHl(); const sl = getSl();
-      if (hl) {
-        document.getElementById('t-hl').value = hl.text || '';
-        document.getElementById('t-hl-sz').value = Math.round(hl.fontSize);
-        document.getElementById('t-hl-sz-v').textContent = Math.round(hl.fontSize);
-        document.getElementById('t-hl-col').value = hl.fill || '#ffffff';
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Typography Panel Controls
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function updateTextPanel() {
+      if (HL) {
+        el('t-hl').value = HL.text || '';
+        el('t-hl-sz').value = Math.round(HL.fontSize);
+        el('t-hl-sz-v').textContent = Math.round(HL.fontSize);
+        el('t-hl-col').value = HL.fill || '#ffffff';
+        el('t-cs').value = Math.round(HL.charSpacing || 0);
+        el('t-cs-v').textContent = Math.round(HL.charSpacing || 0);
+        el('t-lh').value = Math.round((HL.lineHeight || 1.2) * 100);
+        el('t-lh-v').textContent = (HL.lineHeight || 1.2).toFixed(1);
       }
-      if (sl) {
-        document.getElementById('t-sl').value = sl.text || '';
-        document.getElementById('t-sl-sz').value = Math.round(sl.fontSize);
-        document.getElementById('t-sl-sz-v').textContent = Math.round(sl.fontSize);
-        document.getElementById('t-sl-col').value = sl.fill || '#dddddd';
+      if (SL) {
+        el('t-sl').value = SL.text || '';
+        el('t-sl-sz').value = Math.round(SL.fontSize);
+        el('t-sl-sz-v').textContent = Math.round(SL.fontSize);
+        el('t-sl-col').value = SL.fill || '#dddddd';
       }
-      const op = typoGroup ? Math.round((typoGroup.opacity ?? 1) * 100) : 100;
-      document.getElementById('t-op').value = op;
-      document.getElementById('t-op-v').textContent = op + '%';
+      const op = HL ? Math.round((HL.opacity ?? 1) * 100) : 100;
+      el('t-op').value = op; el('t-op-v').textContent = op + '%';
     }
 
-    function upHl(v) { const hl = getHl(); if (hl) { hl.set('text', v); fc.renderAll(); } }
-    function upHlSz(v) { document.getElementById('t-hl-sz-v').textContent = v; const hl = getHl(); if (hl) { hl.set('fontSize', parseInt(v)); fc.renderAll(); } }
-    function upHlCol(v) { const hl = getHl(); if (hl) { hl.set('fill', v); fc.renderAll(); } }
-    function upSl(v) { const sl = getSl(); if (sl) { sl.set('text', v); fc.renderAll(); } }
-    function upSlSz(v) { document.getElementById('t-sl-sz-v').textContent = v; const sl = getSl(); if (sl) { sl.set('fontSize', parseInt(v)); fc.renderAll(); } }
-    function upSlCol(v) { const sl = getSl(); if (sl) { sl.set('fill', v); fc.renderAll(); } }
-    function upTypoOp(v) { document.getElementById('t-op-v').textContent = v + '%'; if (typoGroup) { typoGroup.set('opacity', v / 100); fc.renderAll(); } }
+    function upHl(v) { if (HL) { HL.set('text', v); fc.renderAll(); } }
+    function upHlSz(v) { el('t-hl-sz-v').textContent = v; if (HL) { HL.set('fontSize', +v); fc.renderAll(); } }
+    function upHlCol(v) { if (HL) { HL.set('fill', v); fc.renderAll(); } }
+    function upCS(v) {
+      el('t-cs-v').textContent = v;
+      if (HL) { HL.set('charSpacing', +v); fc.renderAll(); }
+    }
+    function upLH(v) {
+      const lh = (v / 100).toFixed(1); el('t-lh-v').textContent = lh;
+      if (HL) { HL.set('lineHeight', parseFloat(lh)); fc.renderAll(); }
+    }
+    function upSl(v) { if (SL) { SL.set('text', v); fc.renderAll(); } }
+    function upSlSz(v) { el('t-sl-sz-v').textContent = v; if (SL) { SL.set('fontSize', +v); fc.renderAll(); } }
+    function upSlCol(v) { if (SL) { SL.set('fill', v); fc.renderAll(); } }
+    function upTypoOp(v) { el('t-op-v').textContent = v + '%'; if (HL) HL.set('opacity', v / 100); if (SL) SL.set('opacity', v / 100); fc.renderAll(); }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 2 · Rich Text — setSelectionStyles
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    let _editIText = null, _selS = 0, _selE = 0;
-
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Rich Text — setSelectionStyles
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let _editTxt = null, _sS = 0, _sE = 0;
     fc.on('text:selection:changed', e => {
-      _editIText = e.target;
-      _selS = e.target.selectionStart;
-      _selE = e.target.selectionEnd;
-      const hasSel = _selS !== _selE;
-      document.getElementById('r-sel').style.display = hasSel ? 'block' : 'none';
-      if (hasSel) openTab('text');
+      _editTxt = e.target; _sS = e.target.selectionStart; _sE = e.target.selectionEnd;
+      const has = _sS !== _sE;
+      el('r-sel').style.display = has ? 'block' : 'none';
+      if (has) openTab('text');
     });
-    fc.on('text:editing:exited', () => {
-      _editIText = null;
-      document.getElementById('r-sel').style.display = 'none';
-    });
+    fc.on('text:editing:exited', () => { _editTxt = null; el('r-sel').style.display = 'none'; });
 
     function upSelCol(v) {
-      if (_editIText && _selS !== _selE) {
-        _editIText.setSelectionStyles({ fill: v }, _selS, _selE);
-        fc.renderAll();
-      }
+      if (_editTxt && _sS !== _sE) { _editTxt.setSelectionStyles({ fill: v }, _sS, _sE); fc.renderAll(); }
     }
     function upSelSz(v) {
-      document.getElementById('sel-sz-v').textContent = v;
-      if (_editIText && _selS !== _selE) {
-        _editIText.setSelectionStyles({ fontSize: parseInt(v) }, _selS, _selE);
-        fc.renderAll();
+      el('sel-sz-v').textContent = v;
+      if (_editTxt && _sS !== _sE) { _editTxt.setSelectionStyles({ fontSize: +v }, _sS, _sE); fc.renderAll(); }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 5 · Centre Snap — 15px, dashed guides
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const sgV = el2('sg-v'), sgH = el2('sg-h');
+    const SNAP = 15;
+    fc.on('object:moving', e => {
+      const o = e.target; if (!o) return;
+      const b = o.getBoundingRect(true, true);
+      const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+      if (Math.abs(cx - CW / 2) < SNAP) { o.set({ left: o.left + (CW / 2 - cx) }); o.setCoords(); sgV.style.display = 'block'; }
+      else sgV.style.display = 'none';
+      if (Math.abs(cy - CH / 2) < SNAP) { o.set({ top: o.top + (CH / 2 - cy) }); o.setCoords(); sgH.style.display = 'block'; }
+      else sgH.style.display = 'none';
+    });
+    ['object:modified', 'mouse:up'].forEach(ev => fc.on(ev, () => {
+      sgV.style.display = 'none'; sgH.style.display = 'none';
+    }));
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Selection — auto-open tab
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    fc.on('selection:created', e => onSelect(e.selected[0]));
+    fc.on('selection:updated', e => onSelect(e.selected[0]));
+
+    function onSelect(obj) {
+      if (!obj) return;
+      const t = obj.elementType;
+      if (t === 'headline' || t === 'subline') { openTab('text'); updateTextPanel(); }
+      else if (t === 'pip_border') {
+        openTab('pip'); el('pip-ctrls').style.display = 'block';
+        const img = obj._img;
+        el('pip-sw').value = obj.strokeWidth || 4; el('pip-sw-v').textContent = obj.strokeWidth || 4;
+        el('pip-sc').value = obj.stroke || '#ffffff';
+        if (img) {
+          el('pip-px').value = img._panX || 0; el('pip-px-v').textContent = img._panX || 0;
+          el('pip-py').value = img._panY || 0; el('pip-py-v').textContent = img._panY || 0;
+          const z = Math.round((img._zoom || 1) * 100);
+          el('pip-zm').value = z; el('pip-zm-v').textContent = (z / 100).toFixed(1) + '×';
+          el('pip-op').value = Math.round((img.opacity ?? 1) * 100);
+          el('pip-op-v').textContent = el('pip-op').value + '%';
+        }
+      }
+      else if (t === 'logo') {
+        openTab('logo');
+        el('logo-op').value = Math.round((obj.opacity ?? 1) * 100);
+        el('logo-op-v').textContent = el('logo-op').value + '%';
       }
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 5 · Centre Snap (dashed guidelines)
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    const sgV = document.getElementById('sg-v');
-    const sgH = document.getElementById('sg-h');
-    const SNAP = 15;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Tab / Sheet
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let _tab = null, _panOpen = false;
+    function openTab(tab) {
+      if (_tab === tab && _panOpen) { closePanel(); return; }
+      _tab = tab; _panOpen = true;
+      document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('p-' + tab).classList.add('active');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+      const btn = document.querySelector(`.tab[data-tab="${tab}"]`);
+      if (btn) btn.classList.add('on');
+      document.getElementById('panel').classList.add('open');
+    }
+    function closePanel() {
+      _panOpen = false;
+      document.getElementById('panel').classList.remove('open');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    }
 
-    fc.on('object:moving', e => {
-      const obj = e.target; if (!obj) return;
-      const b = obj.getBoundingRect(true, true);
-      const cx = b.left + b.width / 2;
-      const cy = b.top + b.height / 2;
-
-      if (Math.abs(cx - CW / 2) < SNAP) {
-        obj.set({ left: obj.left + (CW / 2 - cx) }); obj.setCoords();
-        sgV.style.display = 'block';
-      } else { sgV.style.display = 'none'; }
-
-      if (Math.abs(cy - CH / 2) < SNAP) {
-        obj.set({ top: obj.top + (CH / 2 - cy) }); obj.setCoords();
-        sgH.style.display = 'block';
-      } else { sgH.style.display = 'none'; }
-    });
-    ['object:modified', 'mouse:up'].forEach(ev => fc.on(ev, () => {
-      sgV.style.display = 'none';
-      sgH.style.display = 'none';
-    }));
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Selection Events — auto-open tab
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    fc.on('selection:created', e => {
-      const obj = e.selected[0];
-      if (!obj) return;
-      autoTab(obj.elementType);
-      if (obj.elementType === 'pip_img') {
-        document.getElementById('pip-ctrls').style.display = 'block';
-        const b = obj._border;
-        if (b) {
-          document.getElementById('pip-sw').value = b.strokeWidth;
-          document.getElementById('pip-sw-v').textContent = b.strokeWidth;
-          document.getElementById('pip-sc').value = b.stroke || '#ffffff';
-        }
-        document.getElementById('pip-op').value = Math.round((obj.opacity ?? 1) * 100);
-        document.getElementById('pip-op-v').textContent = document.getElementById('pip-op').value + '%';
-      }
-      if (obj.elementType === 'logo') {
-        document.getElementById('logo-op').value = Math.round((obj.opacity ?? 1) * 100);
-        document.getElementById('logo-op-v').textContent = document.getElementById('logo-op').value + '%';
-      }
-    });
-    fc.on('selection:updated', e => {
-      const obj = e.selected[0]; if (!obj) return;
-      autoTab(obj.elementType);
-    });
-    fc.on('selection:cleared', () => { /* keep panel open */ });
-
-    // Double-click inside typo group → select sub IText
-    fc.on('mouse:dblclick', e => {
-      if (!e.target || e.target.elementType !== 'typo_group') return;
-      const pt = fc.getPointer(e.e);
-      const sub = e.target.getObjects().find(o => {
-        const b = o.getBoundingRect(false, false);
-        return pt.x >= b.left && pt.x <= b.left + b.width && pt.y >= b.top && pt.y <= b.top + b.height;
-      });
-      if (sub) { fc.setActiveObject(sub); autoTab(sub.elementType); fc.renderAll(); }
-    });
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Actions
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function delSel() {
       const obj = fc.getActiveObject(); if (!obj) return;
       const t = obj.elementType;
-      if (t === 'dimmer') { toast('그라데이션은 삭제 불가'); return; }
-      if (t === 'typo_group') typoGroup = null;
+      if (t === 'dimmer') { toast('그라데이션 삭제 불가'); return; }
+      if (t === 'pip_border' && obj._img) fc.remove(obj._img);
+      if (t === 'headline') HL = null;
+      if (t === 'subline') SL = null;
       if (t === 'logo') logoObj = null;
-      if (t === 'pip_img') {
-        if (obj._border) fc.remove(obj._border);
-        const i = pipImgs.indexOf(obj); if (i > -1) pipImgs.splice(i, 1);
-      }
-      fc.remove(obj); fc.renderAll();
+      if (obj.getObjects) obj.getObjects().forEach(o => { if (o === HL) HL = null; if (o === SL) SL = null; }); // ActiveSelection
+      fc.remove(obj); fc.renderAll(); saveState();
     }
 
     function doReset() {
       if (!confirm('캔버스를 초기화할까요?')) return;
-      pipImgs.forEach(p => { if (p._border) fc.remove(p._border); fc.remove(p); });
-      pipImgs.length = 0;
-      if (logoObj) { fc.remove(logoObj); logoObj = null; }
-      if (typoGroup) { fc.remove(typoGroup); typoGroup = null; }
+      _suspendSave = true;
+      PIPS.forEach(p => { fc.remove(p.img); fc.remove(p.border) }); PIPS.length = 0;
+      [HL, SL, logoObj].forEach(o => { if (o) fc.remove(o); });
+      HL = SL = logoObj = null;
       fc.getObjects().filter(o => o.elementType === 'dimmer').forEach(o => fc.remove(o));
-      addDimmer();
-      addTypoGroup(TITLE, SUB);
-      fc.renderAll(); closePanel();
+      addDimmer(); addTypo(TITLE, SUB); reStack();
+      fc.renderAll(); _suspendSave = false; saveState(); closePanel();
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Recipe Extraction
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Template Save / Load
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    async function saveTemplate() {
+      const json = captureJSON();
+      try {
+        await navigator.clipboard.writeText(json);
+        toast('✅ 클립보드에 복사됨 — 메모장에 붙여넣어 저장하세요');
+      } catch (e) {
+        // Fallback: prompt
+        prompt('아래 JSON을 복사하세요:', json);
+      }
+    }
+
+    async function loadTemplate() {
+      try {
+        const text = await navigator.clipboard.readText();
+        const json = JSON.parse(text);
+        _undo.push(captureJSON());
+        restoreJSON(JSON.stringify(json), () => toast('✅ 템플릿 복원 완료'));
+      } catch (e) {
+        // Fallback: prompt
+        const text = prompt('JSON 템플릿을 붙여넣으세요:');
+        if (!text) return;
+        try {
+          const json = JSON.parse(text);
+          _undo.push(captureJSON());
+          restoreJSON(JSON.stringify(json), () => toast('✅ 템플릿 복원 완료'));
+        } catch (ee) { toast('❌ 유효하지 않은 JSON'); }
+      }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // HQ Export — 1080×1350, Quality 1.0
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function hqExport() {
+      const mult = 1080 / CW;   // scale to full 1080×1350
+      const url = fc.toDataURL({ format: 'jpeg', quality: 1.0, multiplier: mult });
+      const a = document.createElement('a');
+      a.href = url; a.download = '0.1pct_magazine.jpg';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      toast('💾 1080×1350 이미지 저장 완료');
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Recipe Extraction + Publish
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function extractRecipe() {
       const elements = [];
       fc.getObjects().forEach(obj => {
         const t = obj.elementType;
-        if (!t || t === 'dimmer' || t === 'pip_border') return;
-
-        if (t === 'typo_group') {
-          const gMat = obj.calcTransformMatrix();
-          const gD = fabric.util.qrDecompose(gMat);
-          obj.getObjects().forEach(sub => {
-            const st = sub.elementType;
-            if (st !== 'headline' && st !== 'subline') return;
-            elements.push({
-              type: st, text: sub.text || '',
-              left: gD.translateX + sub.left * (gD.scaleX || 1),
-              top: gD.translateY + sub.top * (gD.scaleY || 1),
-              fontSize: sub.fontSize || 36,
-              fill: sub.fill || '#ffffff',
-              scaleX: (gD.scaleX || 1) * (sub.scaleX || 1),
-              scaleY: (gD.scaleY || 1) * (sub.scaleY || 1),
-              angle: (gD.angle || 0) + (sub.angle || 0),
-              width: (sub.width || CW * 0.88) * (gD.scaleX || 1),
-              styles: sub.styles || {},
-            });
-          });
-        }
-
-        else if (t === 'pip_img') {
-          const b = obj.getBoundingRect(false, false);
+        if (!t || t === 'dimmer' || t === 'pip_img' || t === 'pip_border') return;
+        if (t === 'headline' || t === 'subline') {
           elements.push({
-            type: 'magnifier',
+            type: t, text: obj.text || '',
             left: obj.left, top: obj.top,
-            radius: Math.max(b.width, b.height) / 2 * 0.88,
+            fontSize: obj.fontSize, fill: obj.fill || '#ffffff',
+            scaleX: obj.scaleX || 1, scaleY: obj.scaleY || 1,
+            angle: obj.angle || 0, width: obj.width,
+            charSpacing: obj.charSpacing || 0,
+            lineHeight: obj.lineHeight || 1.2,
+            styles: obj.styles || {},
           });
-        }
-
-        else if (t === 'logo') {
+        } else if (t === 'logo') {
           elements.push({
             type: 'logo', left: obj.left, top: obj.top,
-            scaleX: obj.scaleX || 1, scaleY: obj.scaleY || 1,
-            angle: obj.angle || 0, width: obj.width, height: obj.height,
-            opacity: obj.opacity ?? 1,
+            scaleX: obj.scaleX || 1, scaleY: obj.scaleY || 1, angle: obj.angle || 0,
+            width: obj.width, height: obj.height, opacity: obj.opacity ?? 1
           });
         }
+      });
+      // PiP elements
+      PIPS.forEach(({ img, border }) => {
+        if (!fc.getObjects().includes(border)) return;
+        const R = border.radius || Math.round(CW * 0.15);
+        elements.push({ type: 'magnifier', left: border.left, top: border.top, radius: R * 0.9 });
       });
       return { canvas: { width: CW, height: CH }, elements };
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Publish
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function publish() {
       const btn = document.getElementById('pub');
       const data = JSON.stringify(extractRecipe());
@@ -1032,39 +1254,59 @@
       btn.disabled = true; btn.textContent = '전송 중...';
       if (tg?.sendData) {
         try { tg.sendData(data); }
-        catch (e) { toast('전송 실패: ' + e.message); btn.disabled = false; btn.textContent = '🚀 최종 발행'; }
+        catch (e) { toast('전송 실패: ' + e.message); btn.disabled = false; btn.textContent = '🚀 발행'; }
       } else {
         console.log('[DEV] Recipe:', data);
         toast('✅ DEV: 콘솔 확인');
-        btn.disabled = false; btn.textContent = '🚀 최종 발행';
+        btn.disabled = false; btn.textContent = '🚀 발행';
       }
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Toast + Loading helpers
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Utils
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    function el(id) { return document.getElementById(id); }
+    function el2(id) { return document.getElementById(id); }
     let _tt;
     function toast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg; el.classList.add('show');
-      clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 3000);
+      const e = document.getElementById('toast');
+      e.textContent = msg; e.classList.add('show');
+      clearTimeout(_tt); _tt = setTimeout(() => e.classList.remove('show'), 3000);
     }
-    function ldMsg(m) { document.getElementById('ld-msg').textContent = m; }
+    function ldTxt(m) { el('ld-p').textContent = m; }
     function hideLd() {
-      const el = document.getElementById('ld'); el.classList.add('hide');
-      setTimeout(() => el.style.display = 'none', 380);
+      const e = el('ld'); e.classList.add('hide');
+      setTimeout(() => { e.style.display = 'none'; }, 380);
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // Init
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     function finishInit() {
       addDimmer();
-      addTypoGroup(TITLE, SUB);
+      addTypo(TITLE, SUB);
+      reStack();
       autoLoadLogo();
       fc.renderAll();
+
+      // Restore from localStorage if available
+      try {
+        const saved = localStorage.getItem(STORE_KEY);
+        if (saved) {
+          _suspendSave = true;
+          fc.loadFromJSON(JSON.parse(saved), () => {
+            fc.renderAll(); syncRefs(); reStack();
+            _suspendSave = false;
+            _undo = [saved];
+            hideLd(); openTab('text');
+          });
+          return;
+        }
+      } catch (e) { }
+
+      saveState();   // initial snapshot
       hideLd();
-      openTab('text');   // open text tab by default
+      openTab('text');
     }
 
     loadBgCover(IMG, finishInit);
